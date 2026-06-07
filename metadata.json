@@ -1,0 +1,6 @@
+{
+  "name": "ប្រព័ន្ធគ្រប់គ្រងការលក់អនឡាញ (Online Sales Manager)",
+  "description": "ប្រព័ន្ធគ្រប់គ្រងការលក់អនឡាញដែលមានការកត់ត្រាការចំណាយ ចំណូលប្រចាំថ្ងៃ របាយការណ៍ប្រចាំខែ និងប្រព័ន្ធផ្ដល់ដំណឹងស្តុកទាមទារ",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
