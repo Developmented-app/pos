@@ -30,6 +30,7 @@ export interface Sale {
   timestamp: string; // ISO date string
   note?: string;
   paymentMethod?: 'cash' | 'khqr';
+  tag?: 'In-store' | 'Online' | 'Wholesale' | string;
 }
 
 export interface Expense {

@@ -110,7 +110,7 @@ export default function App() {
   // Core modification functions
 
   // 3. POS - Create sales, subtract stock, trigger alerts
-  const handleProcessSale = (saleItems: SaleItem[], note?: string, paymentMethod?: 'cash' | 'khqr') => {
+  const handleProcessSale = (saleItems: SaleItem[], note?: string, paymentMethod?: 'cash' | 'khqr', tag?: string) => {
     // A. Re-verify stock quantities before locking purchase
     for (const item of saleItems) {
       const dbProduct = products.find(p => p.id === item.productId);
@@ -142,7 +142,8 @@ export default function App() {
       total: saleItems.reduce((acc, item) => acc + (item.price * item.quantity), 0),
       timestamp: new Date().toISOString(),
       note: note || '',
-      paymentMethod: paymentMethod || 'cash'
+      paymentMethod: paymentMethod || 'cash',
+      tag: tag || 'In-store'
     };
 
     // D. Update state triggers

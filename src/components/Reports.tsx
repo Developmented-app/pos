@@ -79,6 +79,22 @@ export default function Reports({
   const [startDate, setStartDate] = useState('2026-06-01');
   const [endDate, setEndDate] = useState('2026-06-30');
 
+  // Tag filter states
+  const [selectedTagFilter, setSelectedTagFilter] = useState<string>('All');
+
+  // Dynamic tags list extracted from sales records
+  const availableTags = useMemo(() => {
+    const list = new Set<string>();
+    sales.forEach(sale => {
+      if (sale.tag) {
+        list.add(sale.tag);
+      } else {
+        list.add('In-store');
+      }
+    });
+    return ['All', ...Array.from(list)];
+  }, [sales]);
+
   // Forecast Scenario state ('standard' | 'conservative' | 'optimistic')
   const [forecastScenario, setForecastScenario] = useState<'standard' | 'conservative' | 'optimistic'>('standard');
 
@@ -232,18 +248,24 @@ export default function Reports({
   // Current filter representation
   const activeMonthYearStr = `${selectedYear}-${selectedMonth}`;
 
-  // 1. Filter Sales and Expenses for Selected Month or Custom Date Range
+  // 1. Filter Sales and Expenses for Selected Month or Custom Date Range, and by Tag Filter
   const filteredSalesInMonth = useMemo(() => {
+    let list = [];
     if (filterType === 'monthly') {
-      return sales.filter(sale => sale.timestamp.startsWith(activeMonthYearStr));
+      list = sales.filter(sale => sale.timestamp.startsWith(activeMonthYearStr));
     } else {
-      return sales.filter(sale => {
+      list = sales.filter(sale => {
         if (!sale.timestamp) return false;
         const saleDate = sale.timestamp.slice(0, 10); // "YYYY-MM-DD"
         return saleDate >= startDate && saleDate <= endDate;
       });
     }
-  }, [sales, filterType, activeMonthYearStr, startDate, endDate]);
+
+    if (selectedTagFilter !== 'All') {
+      list = list.filter(sale => (sale.tag || 'In-store') === selectedTagFilter);
+    }
+    return list;
+  }, [sales, filterType, activeMonthYearStr, startDate, endDate, selectedTagFilter]);
 
   const filteredExpensesInMonth = useMemo(() => {
     if (filterType === 'monthly') {
@@ -513,6 +535,31 @@ export default function Reports({
               </div>
             </div>
           )}
+
+          {/* Dynamic Sale Tag Filter */}
+          <div className="flex items-center gap-1.5 bg-white border border-slate-200 rounded-xl px-2.5 py-1.5 shadow-3xs">
+            <span className="text-[9px] font-black text-indigo-500 font-sans uppercase">ស្លាក (Tag)</span>
+            <select
+              value={selectedTagFilter}
+              onChange={(e) => setSelectedTagFilter(e.target.value)}
+              className="px-1 text-xs font-bold text-slate-700 bg-transparent border-none focus:outline-hidden cursor-pointer font-sans"
+            >
+              {availableTags.map(tag => (
+                <option key={tag} value={tag}>
+                  {tag === 'All' 
+                    ? 'ទាំងអស់ (All)' 
+                    : tag === 'In-store' 
+                    ? '🏬 Retail (In-store)' 
+                    : tag === 'Online' 
+                    ? '🌐 Online' 
+                    : tag === 'Wholesale' 
+                    ? '📦 Wholesale' 
+                    : `🏷️ ${tag}`
+                  }
+                </option>
+              ))}
+            </select>
+          </div>
         </div>
       </div>
 

@@ -554,6 +554,23 @@ export default function Dashboard({
                         }`}>
                           {sale.paymentMethod === 'khqr' ? 'KHQR' : 'សាច់ប្រាក់'}
                         </span>
+                        <span className={`text-[8px] font-bold px-1.5 py-0.2 rounded-md ${
+                          (sale.tag || 'In-store') === 'In-store'
+                            ? 'text-indigo-600 bg-indigo-50 border border-indigo-100'
+                            : (sale.tag || 'In-store') === 'Online'
+                            ? 'text-sky-600 bg-sky-50 border border-sky-100'
+                            : (sale.tag || 'In-store') === 'Wholesale'
+                            ? 'text-amber-600 bg-amber-50 border border-amber-100'
+                            : 'text-slate-600 bg-slate-50 border border-slate-100'
+                        }`}>
+                          {sale.tag === 'In-store' 
+                            ? '🏬 Retail' 
+                            : sale.tag === 'Online' 
+                            ? '🌐 Online' 
+                            : sale.tag === 'Wholesale' 
+                            ? '📦 Wholesale' 
+                            : `🏷️ ${sale.tag || 'Retail'}`}
+                        </span>
                       </div>
                       <div className="text-[10px] text-slate-500 truncate max-w-[200px]">
                         {sale.items.map(i => `${i.name} (x${i.quantity})`).join(', ')}

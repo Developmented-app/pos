@@ -29,7 +29,7 @@ import { motion, AnimatePresence } from 'motion/react';
 
 interface POSProps {
   products: Product[];
-  onAddSale: (saleItems: SaleItem[], note?: string, paymentMethod?: 'cash' | 'khqr') => { success: boolean; saleId?: string; error?: string };
+  onAddSale: (saleItems: SaleItem[], note?: string, paymentMethod?: 'cash' | 'khqr', tag?: string) => { success: boolean; saleId?: string; error?: string };
 }
 
 interface CartItem {
@@ -50,6 +50,10 @@ export default function POS({ products, onAddSale }: POSProps) {
   const [khqrPaidStatus, setKhqrPaidStatus] = useState<'waiting' | 'verified' | 'failed'>('waiting');
   const [khqrTimer, setKhqrTimer] = useState<number>(300); // 5 minutes countdown
   
+  // Checkout tagging states
+  const [selectedTag, setSelectedTag] = useState<string>('In-store');
+  const [isCustomTagSelected, setIsCustomTagSelected] = useState(false);
+  
   // Checkout success details
   const [lastReceipt, setLastReceipt] = useState<{
     id: string;
@@ -58,6 +62,7 @@ export default function POS({ products, onAddSale }: POSProps) {
     timestamp: Date;
     note: string;
     paymentMethod?: 'cash' | 'khqr';
+    tag?: string;
   } | null>(null);
 
   // 1. Filter products based on category and search query
@@ -166,6 +171,8 @@ export default function POS({ products, onAddSale }: POSProps) {
     setCashReceived('');
     setKhqrPaidStatus('waiting');
     setKhqrTimer(300); // Reset to 5 mins
+    setSelectedTag('In-store');
+    setIsCustomTagSelected(false);
     setIsCheckoutModalOpen(true);
   };
 
@@ -183,7 +190,8 @@ export default function POS({ products, onAddSale }: POSProps) {
     }));
 
     // Trigger state change in parent with correct payment method parameter
-    const result = onAddSale(saleItems, customNote, method);
+    const finalTag = selectedTag.trim() || 'In-store';
+    const result = onAddSale(saleItems, customNote, method, finalTag);
 
     if (result.success && result.saleId) {
       // Save details to show receipt
@@ -193,7 +201,8 @@ export default function POS({ products, onAddSale }: POSProps) {
         total: totals.total,
         timestamp: new Date(),
         note: customNote,
-        paymentMethod: method
+        paymentMethod: method,
+        tag: finalTag
       });
       // Reset states
       setCart([]);
@@ -248,6 +257,18 @@ export default function POS({ products, onAddSale }: POSProps) {
               <span className="print:text-black">វិធីទូទាត់ (Payment):</span>
               <span className="font-extrabold text-indigo-600 print:text-black">
                 {lastReceipt.paymentMethod === 'khqr' ? '🔵 KHQR (បាគង)' : '💵 សាច់ប្រាក់ (Cash)'}
+              </span>
+            </div>
+            <div className="flex justify-between">
+              <span className="print:text-black">ប្រភេទលក់ (Type):</span>
+              <span className="font-extrabold text-indigo-600 print:text-black">
+                {lastReceipt.tag === 'In-store' 
+                  ? '🏬 ក្នុងហាង (In-store)' 
+                  : lastReceipt.tag === 'Online' 
+                  ? '🌐 អនឡាញ (Online)' 
+                  : lastReceipt.tag === 'Wholesale' 
+                  ? '📦 បោះដុំ (Wholesale)' 
+                  : `🏷️ ${lastReceipt.tag || 'In-store'}`}
               </span>
             </div>
             {lastReceipt.note && (
@@ -767,6 +788,59 @@ export default function POS({ products, onAddSale }: POSProps) {
                         </button>
                       </div>
                     </div>
+
+                    {/* Tagging System Section */}
+                    <div className="space-y-2 pt-2 border-t border-slate-100">
+                      <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block font-sans">ស្លាកសម្គាល់នៃការលក់ (Sale Tag)</span>
+                      <div className="grid grid-cols-3 gap-1.5">
+                        {['In-store', 'Online', 'Wholesale'].map((t) => (
+                          <button
+                            key={t}
+                            type="button"
+                            onClick={() => {
+                              setSelectedTag(t);
+                              setIsCustomTagSelected(false);
+                            }}
+                            className={`py-1.5 px-0.5 rounded-xl border text-center transition-all cursor-pointer text-[10px] font-bold ${
+                              !isCustomTagSelected && selectedTag === t
+                                ? 'bg-indigo-600 text-white border-indigo-600 shadow-3xs'
+                                : 'bg-white border-slate-200 hover:bg-slate-50 text-slate-600 hover:text-slate-800'
+                            }`}
+                          >
+                            {t === 'In-store' ? '🏬 Retail' : t === 'Online' ? '🌐 Online' : '📦 Wholesale'}
+                          </button>
+                        ))}
+                      </div>
+                      <div>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setIsCustomTagSelected(true);
+                            if (selectedTag === 'In-store' || selectedTag === 'Online' || selectedTag === 'Wholesale') {
+                              setSelectedTag('');
+                            }
+                          }}
+                          className={`w-full py-1.5 px-3 rounded-xl border text-left transition-all cursor-pointer text-[10px] font-bold flex items-center justify-between ${
+                            isCustomTagSelected
+                              ? 'bg-indigo-50 border-indigo-300 text-indigo-700'
+                              : 'bg-white border-slate-200 text-slate-500 hover:text-slate-700'
+                          }`}
+                        >
+                          <span>✍️ ស្លាកផ្សេងទៀត (Custom Tag)</span>
+                          {isCustomTagSelected && <span className="h-1.5 w-1.5 rounded-full bg-indigo-600 animate-pulse" />}
+                        </button>
+                        {isCustomTagSelected && (
+                          <input
+                            type="text"
+                            placeholder="ឧ. VIP, Gift..."
+                            value={selectedTag}
+                            onChange={(e) => setSelectedTag(e.target.value)}
+                            className="mt-1 w-full px-3 py-1 bg-white border border-indigo-200 rounded-lg text-[10px] focus:outline-hidden focus:border-indigo-400 font-semibold text-slate-700"
+                          />
+                        )}
+                      </div>
+                    </div>
+
                   </div>
 
                   <div className="pt-4 border-t border-slate-100/40 hidden md:block">
